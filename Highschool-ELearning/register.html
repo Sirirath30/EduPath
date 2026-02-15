@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="description" content="Create your EduPath account and start your learning journey today." />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  
+  <!-- Content Security Policy -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; font-src 'self' https://cdn.jsdelivr.net; img-src 'self' data: https:; connect-src 'self';">
+  
+  <title>Register - EduPath</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" integrity="sha384-...add integrity hash..." crossorigin="anonymous">
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="js/script.js"></script>
+
+</head>
+<body>
+  <header class="navbar">
+    <nav class="container">
+      <a href="index.html" class="logo" aria-label="EduPath Home">
+        <i class="bi bi-book" aria-hidden="true"></i> EduPath
+      </a>
+      <ul class="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="register.html" class="active" aria-current="page">Register</a></li>
+        <li><a href="about.html">About Us</a></li>
+        <li><a href="rate.html">Rate Us</a></li>
+      </ul>
+      <button class="mobile-toggle" onclick="toggleMenu()" aria-label="Toggle navigation menu" aria-expanded="false">☰</button>
+    </nav>
+    <div class="mobile-menu" id="mobileMenu" hidden>
+      <a href="index.html">Home</a>
+      <a href="register.html" class="active">Register</a>
+      <a href="about.html">About Us</a>
+      <a href="rate.html">Rate Us</a>
+    </div>
+  </header>
+  
+  <main>
+    <section class="section">
+      <div class="container">
+        <div class="text-center" style="margin-bottom: 2.5rem;">
+          <h1 class="section-title">Create Your Account</h1>
+          <p class="section-subtitle" style="margin-bottom: 0;">Join EduPath and start your learning journey today.</p>
+        </div>
+        
+        <!-- Added CSRF protection token (would be generated server-side) -->
+        <input type="hidden" id="csrfToken" name="csrf_token" value="secure-random-token-here" />
+        
+        <form class="form-card" id="registerForm" onsubmit="handleRegister(event)" novalidate>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="firstName">First Name</label>
+              <input type="text" id="firstName" 
+                     required 
+                     pattern="[A-Za-z\s\-']{2,50}"
+                     title="First name should contain only letters, spaces, hyphens, or apostrophes (2-50 characters)"
+                     maxlength="50"
+                     autocomplete="given-name"
+                     aria-required="true" />
+              <div class="error-message" id="firstNameError" hidden></div>
+            </div>
+            <div class="form-group">
+              <label for="lastName">Last Name</label>
+              <input type="text" id="lastName" 
+                     required 
+                     pattern="[A-Za-z\s\-']{2,50}"
+                     title="Last name should contain only letters, spaces, hyphens, or apostrophes (2-50 characters)"
+                     maxlength="50"
+                     autocomplete="family-name"
+                     aria-required="true" />
+              <div class="error-message" id="lastNameError" hidden></div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" 
+                   required 
+                   maxlength="254"
+                   pattern="[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}$"
+                   title="Please enter a valid email address"
+                   autocomplete="email"
+                   aria-required="true" />
+            <div class="error-message" id="emailError" hidden></div>
+          </div>
+          
+          <div class="form-group">
+            <label for="grade">Grade Level</label>
+            <select id="grade" required aria-required="true">
+              <option value="">Select your grade</option>
+              <option value="11">Grade 11</option>
+              <option value="12">Grade 12</option>
+            </select>
+            <div class="error-message" id="gradeError" hidden></div>
+          </div>
+          
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" 
+                   required 
+                   minlength="8"
+                   maxlength="128"
+                   pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+                   title="Password must contain at least 8 characters, including uppercase, lowercase, number, and special character"
+                   autocomplete="new-password"
+                   aria-required="true" />
+            <div class="password-strength" id="passwordStrength"></div>
+            <div class="error-message" id="passwordError" hidden></div>
+          </div>
+          
+          <div class="form-group">
+            <label for="confirmPassword">Confirm Password</label>
+            <input type="password" id="confirmPassword" 
+                   required 
+                   minlength="8"
+                   maxlength="128"
+                   autocomplete="new-password"
+                   aria-required="true" />
+            <div class="error-message" id="confirmPasswordError" hidden></div>
+          </div>
+          
+          <!-- Honeypot field for bot detection -->
+          <div class="honeypot" aria-hidden="true" style="display: none;">
+            <label for="website">Leave this field empty</label>
+            <input type="text" id="website" name="website" tabindex="-1" autocomplete="off" />
+          </div>
+          
+          <!-- Rate limiting hidden field -->
+          <input type="hidden" id="formTimestamp" value="" />
+          
+          <button type="submit" class="btn-primary" id="submitBtn">Create Account</button>
+          
+          <div style="text-align: center; color: darkred; font-size: 1rem; margin-top: 1rem;">
+            <a href="login.html">Already have an account? Log In</a>
+          </div>
+          
+          <p class="form-note">By registering, you agree to our Terms of Service and Privacy Policy.</p>
+        </form>
+      </div>
+    </section>
+  </main>
+  
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <i class="bi bi-book" aria-hidden="true"></i> EduPath
+          <p>Empowering high school students with quality online education and resources.</p>
+        </div>
+        <div>
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="register.html">Register</a></li>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="rate.html">Rate Us</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Contact</h4>
+          <ul>
+            <li>info@edupath.com</li>
+            <li>+(855) 123 456 789</li>
+            <li>Phnom Penh, Cambodia</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">© 2026 EduPath. All rights reserved.</div>
+    </div>
+  </footer>
+
+</body>
+</html>
+
