@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teacher Dashboard - EduPath</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/teacher/dashboard.css') }}" />
+  <script src="{{ url_for('static', filename='js/core/shared.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/notification.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/mobile-menu.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/password-handler.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/form-validator.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/pages/teacher/dashboard.js') }}"></script>
+
+</head>
+<body>
+  <header class="navbar">
+    <nav class="container">
+      <a href="{{ url_for('index') }}" class="logo">
+        <i class="bi bi-book"></i> EduPath
+      </a>
+      <ul class="nav-links">
+        <li><a href="{{ url_for('teacher_dashboard') }}" class="active">Dashboard</a></li>
+        <li><a href="#" onclick="showTab('upload-video'); return false;">Upload Video</a></li>
+        <li><a href="#" onclick="showTab('upload-document'); return false;">Upload Document</a></li>
+        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+      </ul>
+      <div class="user-info">
+        <i class="bi bi-person-circle"></i>
+        <span>{{ session.name }}</span>
+        <span class="badge-teacher">
+          {{ teacher.subject }} - 
+          {% if teacher.grade_level_list and teacher.grade_level_list|length > 1 %}
+            Grades {{ teacher.grade_level_list|join(' & ') }}
+          {% else %}
+            Grade {{ teacher.grade_level or teacher.grade_level_list[0] }}
+          {% endif %}
+        </span>
+      </div>
+      <button class="mobile-toggle" onclick="toggleMenu()">☰</button>
+    </nav>
+    <div class="mobile-menu" id="mobileMenu" hidden>
+      <a href="{{ url_for('teacher_dashboard') }}" class="active">Dashboard</a>
+      <a href="#" onclick="showTab('upload-video'); return false;">Upload Video</a>
+      <a href="#" onclick="showTab('upload-document'); return false;">Upload Document</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="section">
+      <div class="container">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}" style="padding:1rem; border-radius:var(--radius); margin-bottom:1rem; background:var(--{{ category }}-light); color:var(--{{ category }});">
+                {{ message }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Teacher Header -->
+        <div class="teacher-header">
+          <div class="teacher-header-content">
+            <h1>Welcome, {{ session.name }}!</h1>
+            <p>
+              <span><i class="bi bi-person-badge"></i> {{ teacher.subject }} Teacher</span>
+              <span>
+                <i class="bi bi-mortarboard"></i> 
+                {% if teacher.grade_level_list and teacher.grade_level_list|length > 1 %}
+                  Grades 
+                  {% for grade in teacher.grade_level_list %}
+                    <span class="grade-pill">{{ grade }}</span>
+                  {% endfor %}
+                {% else %}
+                  Grade {{ teacher.grade_level or teacher.grade_level_list[0] }}
+                {% endif %}
+              </span>
+              <span><i class="bi bi-calendar"></i> Joined {{ teacher.join_date.strftime('%B %Y') if teacher.join_date else 'Recently' }}</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Grade Switcher (only for teachers with multiple grades) -->
+        {% if teacher.grade_level_list and teacher.grade_level_list|length > 1 %}
+        <div class="grade-switcher">
+          <div class="grade-tabs">
+            {% for grade in teacher.grade_level_list %}
+            <a href="{{ url_for('teacher_dashboard', grade=grade) }}" 
+               class="grade-tab {% if current_grade == grade %}active{% endif %}">
+              <i class="bi bi-mortarboard"></i>
+              Grade {{ grade }}
+              {% if grade_stats and grade_stats[grade] %}
+              <span class="grade-badge">{{ grade_stats[grade].student_count or 0 }} students</span>
+              {% endif %}
+            </a>
+            {% endfor %}
+          </div>
+          <div class="grade-info">
+            <i class="bi bi-info-circle"></i>
+            <span>Viewing: <strong>Grade {{ current_grade }}</strong></span>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon primary"><i class="bi bi-book"></i></div>
+            <div class="stat-content">
+              <h3>{{ courses|length }}</h3>
+              <p>Active Courses</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon success"><i class="bi bi-people"></i></div>
+            <div class="stat-content">
+              <h3>{{ students|length }}</h3>
+              <p>Total Students</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon warning"><i class="bi bi-file-text"></i></div>
+            <div class="stat-content">
+              <h3>{{ total_materials }}</h3>
+              <p>Materials</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon info"><i class="bi bi-pencil"></i></div>
+            <div class="stat-content">
+              <h3>{{ total_quizzes }}</h3>
+              <p>Quizzes</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dashboard Tabs -->
+        <div class="dashboard-tabs">
+          <button class="tab-btn active" onclick="showTab('courses')">My Courses</button>
+          <button class="tab-btn" onclick="showTab('upload-video')">Upload Video</button>
+          <button class="tab-btn" onclick="showTab('upload-document')">Upload Document</button>
+        </div>
+
+        <!-- Courses Tab -->
+        <div id="courses-tab" class="tab-content active">
+          <h2 class="section-subtitle">
+            <i class="bi bi-grid-3x3-gap-fill"></i> Course Management
+            {% if teacher.grade_level_list and teacher.grade_level_list|length > 1 %}
+            <span style="background: var(--primary-light); color: var(--primary); padding: 0.2rem 1rem; border-radius: 2rem; font-size: 0.9rem; margin-left: 1rem;">Grade {{ current_grade }}</span>
+            {% endif %}
+          </h2>
+          
+          {% if courses %}
+            {% for course in courses %}
+            <div class="course-section">
+              <div class="course-section-header">
+                <div>
+                  <h3>{{ course.name }}</h3>
+                  <p style="opacity:0.9; margin:0.5rem 0 0 0;">{{ course.code }}</p>
+                </div>
+                <span class="course-code-large">{{ course.student_count }} Students Enrolled</span>
+              </div>
+              
+              <div class="course-section-body">
+                <!-- Course Stats -->
+                <div class="course-stats-grid">
+                  <div class="course-stat-card">
+                    <div class="course-stat-value">{{ course.material_count }}</div>
+                    <div class="course-stat-label">Total Materials</div>
+                  </div>
+                  <div class="course-stat-card">
+                    <div class="course-stat-value">{{ course.video_count or 0 }}</div>
+                    <div class="course-stat-label">Videos</div>
+                  </div>
+                  <div class="course-stat-card">
+                    <div class="course-stat-value">{{ course.document_count or 0 }}</div>
+                    <div class="course-stat-label">Documents</div>
+                  </div>
+                  <div class="course-stat-card">
+                    <div class="course-stat-value">{{ course.quiz_count }}</div>
+                    <div class="course-stat-label">Quizzes</div>
+                  </div>
+                </div>
+
+                <!-- Content Grid -->
+                <div class="content-grid">
+                  <!-- Videos Column -->
+                  <div class="content-column">
+                    <div class="column-header video">
+                      <i class="bi bi-camera-reel"></i>
+                      <span>Videos ({{ course.video_count or 0 }})</span>
+                    </div>
+                    <div style="max-height: 400px; overflow-y: auto;">
+                      {% if course_materials_map and course_materials_map[course.id] %}
+                        {% for material in course_materials_map[course.id] if material.type == 'video' or material.type == 'video_with_quiz' %}
+                        <div class="content-item" id="material-{{ material.id }}">
+                          <div class="content-title">
+                            <h5>{{ material.title }}</h5>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                              {% if material.type == 'video_with_quiz' %}
+                              <span class="material-type-badge">
+                                <i class="bi bi-question-circle"></i> Quiz
+                              </span>
+                              {% endif %}
+                              <a href="{{ url_for('preview_material', material_id=material.id) }}" class="quiz-results-btn" style="background: var(--primary); color: white; padding: 0.2rem 0.6rem; font-size: 0.65rem;">
+                                <i class="bi bi-eye"></i> Preview
+                              </a>
+                              <button onclick="showDeleteModal('{{ material.id }}', '{{ material.title }}', 'material')" class="quiz-results-btn" style="background: var(--danger); color: white; border: none; padding: 0.2rem 0.6rem; font-size: 0.65rem;">
+                                <i class="bi bi-trash"></i> Delete
+                              </button>
+                            </div>
+                          </div>
+                          <div class="content-meta">
+                            <span><i class="bi bi-calendar3"></i> {{ material.upload_date.strftime('%b %d, %Y') if material.upload_date else 'Recently' }}</span>
+                            {% if material.duration %}
+                            <span><i class="bi bi-clock"></i> {{ material.duration }}</span>
+                            {% endif %}
+                          </div>
+                        </div>
+                        {% else %}
+                        <p class="text-muted" style="text-align:center; padding:1rem;">No videos yet</p>
+                        {% endfor %}
+                      {% else %}
+                      <p class="text-muted" style="text-align:center; padding:1rem;">No videos yet</p>
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  <!-- Documents Column -->
+                  <div class="content-column">
+                    <div class="column-header document">
+                      <i class="bi bi-file-text"></i>
+                      <span>Documents ({{ course.document_count or 0 }})</span>
+                    </div>
+                    <div style="max-height: 400px; overflow-y: auto;">
+                      {% if course_materials_map and course_materials_map[course.id] %}
+                        {% for material in course_materials_map[course.id] if material.type == 'document' %}
+                        <div class="content-item" id="material-{{ material.id }}">
+                          <div class="content-title">
+                            <h5>{{ material.title }}</h5>
+                            <div style="display: flex; gap: 0.5rem;">
+                              <a href="{{ url_for('static', filename='uploads/' + material.file_path) }}" target="_blank" class="quiz-results-btn" style="background: var(--warning); color: white; padding: 0.2rem 0.6rem; font-size: 0.65rem;">
+                                <i class="bi bi-file-text"></i> View
+                              </a>
+                              <button onclick="showDeleteModal('{{ material.id }}', '{{ material.title }}', 'material')" class="quiz-results-btn" style="background: var(--danger); color: white; border: none; padding: 0.2rem 0.6rem; font-size: 0.65rem;">
+                                <i class="bi bi-trash"></i> Delete
+                              </button>
+                            </div>
+                          </div>
+                          <div class="content-meta">
+                            <span><i class="bi bi-calendar3"></i> {{ material.upload_date.strftime('%b %d, %Y') if material.upload_date else 'Recently' }}</span>
+                            {% if material.file_size %}
+                            <span><i class="bi bi-hdd"></i> {{ material.file_size }}</span>
+                            {% endif %}
+                          </div>
+                        </div>
+                        {% else %}
+                        <p class="text-muted" style="text-align:center; padding:1rem;">No documents yet</p>
+                        {% endfor %}
+                      {% else %}
+                      <p class="text-muted" style="text-align:center; padding:1rem;">No documents yet</p>
+                      {% endif %}
+                    </div>
+                  </div>
+
+                  <!-- Quizzes Column -->
+                  <div class="content-column">
+                    <div class="column-header quiz">
+                      <i class="bi bi-pencil"></i>
+                      <span>Quizzes ({{ course_quizzes[course.id]|length if course_quizzes and course_quizzes[course.id] else 0 }})</span>
+                    </div>
+                    <div style="max-height: 400px; overflow-y: auto;">
+                      {% if course_quizzes and course_quizzes[course.id] and course_quizzes[course.id]|length > 0 %}
+                        {% for quiz in course_quizzes[course.id] %}
+                        <div class="content-item" id="{% if quiz.quiz_type == 'video_quiz' %}material-{{ quiz.id }}{% else %}quiz-{{ quiz.id }}{% endif %}">
+                          <div class="content-title">
+                            <h5>
+                              {{ quiz.title }}
+                              {% if quiz.quiz_type == 'video_quiz' %}
+                                <span class="material-type-badge">
+                                  <i class="bi bi-camera-video"></i> Interactive
+                                </span>
+                              {% endif %}
+                            </h5>
+                            <div style="display: flex; gap: 0.5rem;">
+                              {% if quiz.quiz_type == 'video_quiz' %}
+                                <a href="{{ url_for('view_video_quiz_results', material_id=quiz.id) }}" class="quiz-results-btn">
+                                  <i class="bi bi-bar-chart"></i> Results
+                                </a>
+                                <button onclick="showDeleteModal('{{ quiz.id }}', '{{ quiz.title }}', 'video_quiz')" class="quiz-results-btn" style="background: var(--danger); color: white; border: none;">
+                                  <i class="bi bi-trash"></i> Delete
+                                </button>
+                              {% else %}
+                                <a href="{{ url_for('view_quiz_results', quiz_id=quiz.id) }}" class="quiz-results-btn">
+                                  <i class="bi bi-bar-chart"></i> Results
+                                </a>
+                                <button onclick="showDeleteModal('{{ quiz.id }}', '{{ quiz.title }}', 'quiz')" class="quiz-results-btn" style="background: var(--danger); color: white; border: none;">
+                                  <i class="bi bi-trash"></i> Delete
+                                </button>
+                              {% endif %}
+                            </div>
+                          </div>
+                          <div class="quiz-stats">
+                            <span><i class="bi bi-people"></i> {{ quiz.attempt_count or 0 }} attempts</span>
+                            <span><i class="bi bi-star"></i> Avg {{ quiz.avg_score or 0 }}%</span>
+                            {% if quiz.total_questions %}
+                            <span><i class="bi bi-question-circle"></i> {{ quiz.total_questions }} questions</span>
+                            {% endif %}
+                          </div>
+                        </div>
+                        {% endfor %}
+                      {% else %}
+                        <p class="text-muted" style="text-align:center; padding:1rem;">No quizzes yet</p>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div style="display: flex; gap: 1rem; margin-top: 1.5rem; justify-content: flex-end; flex-wrap: wrap;">
+                  <button class="btn-secondary" onclick="uploadToCourse('{{ course.id }}', 'video')">
+                    <i class="bi bi-camera-reel"></i> Add Video
+                  </button>
+                  <button class="btn-secondary" onclick="uploadToCourse('{{ course.id }}', 'document')">
+                    <i class="bi bi-file-text"></i> Add Document
+                  </button>
+                  <button class="btn-secondary" onclick="createQuizForCourse('{{ course.id }}')">
+                    <i class="bi bi-pencil"></i> Create Quiz
+                  </button>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="empty-state">
+              <i class="bi bi-journal"></i>
+              <h3>No Courses Yet for Grade {{ current_grade }}</h3>
+              <p class="text-muted">You haven't been assigned any courses for this grade level.</p>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Upload Video Tab -->
+        <div id="upload-video-tab" class="tab-content">
+          <h2 class="section-subtitle">
+            <i class="bi bi-camera-reel"></i> Upload Video Content
+          </h2>
+          
+          <div class="upload-container">
+            <!-- Simple Video Upload -->
+            <div class="upload-card">
+              <h3><i class="bi bi-camera-reel"></i> Upload Video</h3>
+              <form action="{{ url_for('upload_content') }}" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="type" value="video">
+                <div class="form-group">
+                  <label>Course</label>
+                  <select name="course_id" id="video_course_select" required>
+                    <option value="">Select course</option>
+                    {% for course in courses %}
+                    <option value="{{ course.id }}">{{ course.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Title</label>
+                  <input type="text" name="title" placeholder="Enter video title" required>
+                </div>
+                <div class="form-group">
+                  <label>Description (Optional)</label>
+                  <textarea name="description" rows="3" placeholder="Enter video description"></textarea>
+                </div>
+                <div class="upload-area" onclick="this.nextElementSibling.click()">
+                  <i class="bi bi-cloud-upload"></i>
+                  <p>Click to upload video</p>
+                  <small>MP4, MOV, AVI (Max 500MB)</small>
+                </div>
+                <input type="file" name="file" accept="video/*" style="display:none;" required onchange="updateUploadLabel(this, 'video')">
+                <button type="submit" class="btn-primary" style="width: 100%;">
+                  <i class="bi bi-upload"></i> Upload Video
+                </button>
+              </form>
+            </div>
+
+            <!-- Video with Quiz Upload -->
+            <div class="upload-card">
+              <h3><i class="bi bi-question-circle"></i> Video with Quiz</h3>
+              <form action="{{ url_for('upload_video_quiz') }}" method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                  <label>Course</label>
+                  <select name="course_id" id="video_quiz_course_select" required>
+                    <option value="">Select course</option>
+                    {% for course in courses %}
+                    <option value="{{ course.id }}">{{ course.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Title</label>
+                  <input type="text" name="title" placeholder="Enter video title" required>
+                </div>
+                <div class="form-group">
+                  <label>Description (Optional)</label>
+                  <textarea name="description" rows="2" placeholder="Enter video description"></textarea>
+                </div>
+                <div class="upload-area" onclick="this.nextElementSibling.click()">
+                  <i class="bi bi-camera-video"></i>
+                  <p>Click to upload video</p>
+                  <small>MP4 only (Max 500MB)</small>
+                </div>
+                <input type="file" name="video" accept="video/mp4" style="display:none;" required onchange="updateUploadLabel(this, 'video_quiz')">
+                
+                <h4 style="margin:1.5rem 0 1rem; display: flex; justify-content: space-between; align-items: center;">
+                  <span>Quiz Questions</span>
+                  <button type="button" class="btn-secondary" onclick="addQuestionField()" style="padding: 0.3rem 0.8rem; font-size: 0.85rem;">
+                    <i class="bi bi-plus-circle"></i> Add
+                  </button>
+                </h4>
+                <div id="questions-container"></div>
+                <button type="submit" class="btn-primary" style="width: 100%;">
+                  <i class="bi bi-upload"></i> Upload Video with Quiz
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Upload Document Tab -->
+        <div id="upload-document-tab" class="tab-content">
+          <h2 class="section-subtitle">
+            <i class="bi bi-file-text"></i> Upload Document Content
+          </h2>
+          
+          <div class="upload-container">
+            <!-- Document Upload -->
+            <div class="upload-card">
+              <h3><i class="bi bi-file-text"></i> Upload Document</h3>
+              <form action="{{ url_for('upload_content') }}" method="POST" enctype="multipart/form-data">
+                <input type="hidden" name="type" value="document">
+                <div class="form-group">
+                  <label>Course</label>
+                  <select name="course_id" id="document_course_select" required>
+                    <option value="">Select course</option>
+                    {% for course in courses %}
+                    <option value="{{ course.id }}">{{ course.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Title</label>
+                  <input type="text" name="title" placeholder="Enter document title" required>
+                </div>
+                <div class="form-group">
+                  <label>Description (Optional)</label>
+                  <textarea name="description" rows="3" placeholder="Enter document description"></textarea>
+                </div>
+                <div class="upload-area" onclick="this.nextElementSibling.click()">
+                  <i class="bi bi-file-pdf"></i>
+                  <p>Click to upload document</p>
+                  <small>PDF, DOC, DOCX, PPT, TXT (Max 50MB)</small>
+                </div>
+                <input type="file" name="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.txt" style="display:none;" required onchange="updateUploadLabel(this, 'document')">
+                <button type="submit" class="btn-primary" style="width: 100%;">
+                  <i class="bi bi-upload"></i> Upload Document
+                </button>
+              </form>
+            </div>
+
+            <!-- Create Quiz -->
+            <div class="upload-card">
+              <h3><i class="bi bi-pencil"></i> Create Quiz</h3>
+              <form action="{{ url_for('create_quiz') }}" method="POST">
+                <div class="form-group">
+                  <label>Course</label>
+                  <select name="course_id" id="quiz_course_select" required>
+                    <option value="">Select course</option>
+                    {% for course in courses %}
+                    <option value="{{ course.id }}">{{ course.name }}</option>
+                    {% endfor %}
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label>Quiz Title</label>
+                  <input type="text" name="title" placeholder="Enter quiz title" required>
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>Time Limit (minutes)</label>
+                    <input type="number" name="time_limit" value="30" min="1" max="180">
+                  </div>
+                  <div class="form-group">
+                    <label>Due Date</label>
+                    <input type="date" name="due_date">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label>Description (Optional)</label>
+                  <textarea name="description" rows="2" placeholder="Enter quiz description"></textarea>
+                </div>
+                
+                <h4 style="margin:1.5rem 0 1rem; display: flex; justify-content: space-between; align-items: center;">
+                  <span>Quiz Questions</span>
+                  <button type="button" class="btn-secondary" onclick="addQuickQuestion()" style="padding: 0.3rem 0.8rem; font-size: 0.85rem;">
+                    <i class="bi bi-plus-circle"></i> Add
+                  </button>
+                </h4>
+                <div id="quick-questions-container"></div>
+                <button type="submit" class="btn-primary" style="width: 100%;">
+                  <i class="bi bi-save"></i> Create Quiz
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        {% if recent_activity %}
+        <h2 class="section-subtitle" style="margin-top:3rem;">
+          <i class="bi bi-activity"></i> Recent Student Activity
+        </h2>
+        <div class="activity-feed">
+          {% for activity in recent_activity %}
+          <div class="activity-item">
+            <div class="activity-avatar">
+              {{ activity.first_name[0] }}{{ activity.last_name[0] }}
+            </div>
+            <div class="activity-content">
+              <div class="activity-header">
+                <span class="activity-student">{{ activity.first_name }} {{ activity.last_name }}</span>
+                <span class="activity-time">{{ activity.last_accessed.strftime('%b %d, %Y at %I:%M %p') }}</span>
+              </div>
+              <div class="activity-details">
+                <div class="activity-detail-item"><i class="bi bi-book"></i> {{ activity.course_name }}</div>
+                <div class="activity-detail-item"><i class="bi bi-file-text"></i> {{ activity.material_title }}</div>
+              </div>
+              <span class="activity-status"><i class="bi bi-check-circle"></i> Completed</span>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <h4><i class="bi bi-book"></i> EduPath</h4>
+          <p>Empowering students through online education.</p>
+        </div>
+        <div>
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('teacher_dashboard') }}">Dashboard</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Contact</h4>
+          <ul>
+            <li><i class="bi bi-envelope"></i> info@edupath.com</li>
+            <li><i class="bi bi-telephone"></i> +(855) 123 456 789</li>
+            <li><i class="bi bi-geo-alt"></i> Phnom Penh, Cambodia</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        © 2026 EduPath. All rights reserved.
+      </div>
+    </div>
+  </footer>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="modal">
+    <div class="modal-content">
+      <h3 style="margin-top: 0; color: var(--danger);">
+        <i class="bi bi-exclamation-triangle"></i> Confirm Delete
+      </h3>
+      <p id="deleteMessage">Are you sure you want to delete this item?</p>
+      <p style="font-size: 0.9rem; color: var(--muted-foreground);" id="deleteDetails"></p>
+      
+      <div style="display: flex; gap: 1rem; justify-content: flex-end; margin-top: 2rem;">
+        <button class="btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+        <button class="btn-primary" id="confirmDeleteBtn" style="background: var(--danger);" onclick="confirmDelete()">
+          <i class="bi bi-trash"></i> Delete Permanently
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Container -->
+  <div id="notificationContainer" style="position: fixed; top: 20px; right: 20px; z-index: 10001;"></div>
+
+</body>
+</html>
+

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create Quiz - EduPath</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <script src="{{ url_for('static', filename='js/core/shared.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/notification.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/mobile-menu.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/password-handler.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/form-validator.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/pages/teacher/create-quiz.js') }}"></script>
+  
+</head>
+<body>
+  <header class="navbar">
+    <nav class="container">
+      <a href="{{ url_for('index') }}" class="logo">
+        <i class="bi bi-book"></i> EduPath
+      </a>
+      <ul class="nav-links">
+        <li><a href="{{ url_for('teacher_dashboard') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('upload_content') }}">Upload</a></li>
+        <li><a href="{{ url_for('create_quiz') }}" class="active">Create Quiz</a></li>
+        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+      </ul>
+      <div class="user-info">
+        <i class="bi bi-person-circle"></i>
+        <span>{{ session.name }}</span>
+      </div>
+      <button class="mobile-toggle" onclick="toggleMenu()">☰</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="section">
+      <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <h1 class="section-title">Create New Quiz</h1>
+        
+        <div class="form-card">
+          <form method="POST">
+            <div class="form-group">
+              <label for="course_id">Select Course</label>
+              <select id="course_id" name="course_id" required>
+                <option value="">Choose a course</option>
+                {% for course in courses %}
+                <option value="{{ course.id }}">{{ course.name }} ({{ course.code }})</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="title">Quiz Title</label>
+              <input type="text" id="title" name="title" required>
+            </div>
+
+            <div class="form-group">
+              <label for="description">Description</label>
+              <textarea id="description" name="description" rows="3"></textarea>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="time_limit">Time Limit (minutes)</label>
+                <input type="number" id="time_limit" name="time_limit" value="30" min="5" max="180">
+              </div>
+              <div class="form-group">
+                <label for="due_date">Due Date</label>
+                <input type="date" id="due_date" name="due_date">
+              </div>
+            </div>
+
+            <h3 style="margin: 2rem 0 1rem;">Questions</h3>
+            <div id="questions"></div>
+
+            <button type="button" class="btn-secondary" onclick="addQuestion()" style="margin-bottom: 1rem;">
+              <i class="bi bi-plus-circle"></i> Add Question
+            </button>
+
+            <button type="submit" class="btn-primary">
+              <i class="bi bi-save"></i> Create Quiz
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+</body>
+</html>

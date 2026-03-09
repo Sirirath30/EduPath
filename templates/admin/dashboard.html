@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard - EduPath</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/admin/dashboard.css') }}" /> 
+  <script src="{{ url_for('static', filename='js/core/shared.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/notification.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/mobile-menu.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/password-handler.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/form-validator.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/pages/admin/dashboard.js') }}"></script>
+
+</head>
+<body>
+  <header class="navbar">
+    <nav class="container">
+      <a href="{{ url_for('index') }}" class="logo">
+        <i class="bi bi-book"></i> EduPath
+      </a>
+      <ul class="nav-links">
+        <li><a href="{{ url_for('admin_dashboard') }}" class="active">Dashboard</a></li>
+        <li><a href="{{ url_for('admin_approvals') }}">Approvals</a></li>
+        <li><a href="{{ url_for('admin_feedback') }}">View Feedback</a></li>
+        <li><a href="{{ url_for('create_teacher') }}">Add Teacher</a></li>
+        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+      </ul>
+      <div class="user-info">
+        <i class="bi bi-person-circle"></i>
+        <span>{{ session.name }}</span>
+      </div>
+      <button class="mobile-toggle" onclick="toggleMenu()">☰</button>
+    </nav>
+    <div class="mobile-menu" id="mobileMenu" hidden>
+      <a href="{{ url_for('admin_dashboard') }}" class="active">Dashboard</a>
+      <a href="{{ url_for('admin_approvals') }}">Approvals</a>
+      <a href="{{ url_for('admin_feedback') }}">View Feedback</a>
+      <a href="{{ url_for('create_teacher') }}">Add Teacher</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="section">
+      <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <h1 class="section-title" style="margin-bottom: 0;">Admin Dashboard</h1>
+            <p class="section-subtitle" style="margin-bottom: 0;">Welcome back, {{ session.name }}!</p>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <span class="card-badge"><i class="bi bi-calendar"></i> {{ now.strftime('%B %d, %Y') }}</span>
+          </div>
+        </div>
+        
+        <!-- Stats Cards -->
+        <div class="features-grid" style="margin-bottom: 2rem;">
+          <div class="feature-card">
+            <div class="feature-icon"><i class="bi bi-person-check"></i></div>
+            <h3>{{ pending_approvals }}</h3>
+            <p>Pending Approvals</p>
+            {% if pending_approvals > 0 %}
+            <span style="background: var(--primary); color: white; padding: 0.2rem 0.5rem; border-radius: 1rem; font-size: 0.7rem; margin-top: 0.5rem; display: inline-block;">Action needed</span>
+            {% endif %}
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="bi bi-people"></i></div>
+            <h3>{{ total_students }}</h3>
+            <p>Total Students</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="bi bi-person-workspace"></i></div>
+            <h3>{{ total_teachers }}</h3>
+            <p>Total Teachers</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="bi bi-book"></i></div>
+            <h3>{{ total_courses }}</h3>
+            <p>Total Courses</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="bi bi-chat"></i></div>
+            <h3>{{ feedback_count or 0 }}</h3>
+            <p>Feedback</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon"><i class="bi bi-mortarboard"></i></div>
+            <h3>{{ active_enrollments }}</h3>
+            <p>Active Enrollments</p>
+          </div>
+        </div>
+
+        <!-- Enhanced Dashboard Grid -->
+        <div class="dashboard-grid">
+          <!-- Recent Registrations Card -->
+          <div class="dashboard-card">
+            <div class="card-header">
+              <h3>
+                <i class="bi bi-person-plus"></i>
+                Recent Registrations
+              </h3>
+              <span class="card-badge">{{ recent_registrations|length }} new</span>
+            </div>
+            
+            {% if recent_registrations %}
+            <div class="registration-list">
+              {% for reg in recent_registrations %}
+              <div class="registration-item">
+                <div class="student-avatar">
+                  {{ reg.first_name[0] }}{{ reg.last_name[0] }}
+                </div>
+                <div class="student-details">
+                  <div class="student-name">
+                    {{ reg.first_name }} {{ reg.last_name }}
+                    <span class="student-grade">Grade {{ reg.grade_level }}</span>
+                  </div>
+                  <div class="student-meta">
+                    <span><i class="bi bi-envelope"></i> {{ reg.email }}</span>
+                    <span class="registration-date">
+                      <i class="bi bi-calendar3"></i> {{ reg.created_at.strftime('%b %d, %Y') }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state-small">
+              <i class="bi bi-emoji-smile"></i>
+              <p>No pending registrations</p>
+            </div>
+            {% endif %}
+            
+            <div style="margin-top: 1.5rem; text-align: center;">
+              <a href="{{ url_for('admin_approvals') }}" class="btn-primary" style="display: inline-block; width: auto; padding: 0.75rem 2rem;">
+                <i class="bi bi-arrow-right"></i> View All Approvals
+              </a>
+            </div>
+          </div>
+
+          <!-- Recent Feedback Card -->
+          <div class="dashboard-card">
+            <div class="card-header">
+              <h3>
+                <i class="bi bi-chat-dots"></i>
+                Recent Feedback
+              </h3>
+              <span class="card-badge">{{ recent_feedback|length }} new</span>
+            </div>
+            
+            {% if recent_feedback %}
+            <div class="feedback-list">
+              {% for fb in recent_feedback %}
+              <div class="feedback-item">
+                <div class="feedback-header">
+                  <div class="feedback-user">
+                    <i class="bi bi-person-circle"></i>
+                    <strong>{{ fb.name or 'Anonymous' }}</strong>
+                  </div>
+                  <div class="feedback-rating">
+                    {% for i in range(5) %}
+                      {% if i < fb.rating %}
+                        <i class="bi bi-star-fill"></i>
+                      {% else %}
+                        <i class="bi bi-star"></i>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                </div>
+                
+                <div class="feedback-message">
+                  "{{ fb.message[:80] }}{% if fb.message|length > 80 %}...{% endif %}"
+                </div>
+                
+                <div class="feedback-footer">
+                  <span>
+                    <i class="bi bi-calendar3"></i> {{ fb.created_at.strftime('%b %d, %Y') }}
+                  </span>
+                  <span class="feedback-tag">
+                    {% if fb.rating >= 4 %}
+                      <i class="bi bi-emoji-smile"></i> Positive
+                    {% elif fb.rating == 3 %}
+                      <i class="bi bi-emoji-neutral"></i> Neutral
+                    {% else %}
+                      <i class="bi bi-emoji-frown"></i> Critical
+                    {% endif %}
+                  </span>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state-small">
+              <i class="bi bi-chat"></i>
+              <p>No feedback yet</p>
+            </div>
+            {% endif %}
+            
+            <div style="margin-top: 1.5rem; text-align: center;">
+              <a href="{{ url_for('admin_feedback') }}" class="btn-primary" style="display: inline-block; width: auto; padding: 0.75rem 2rem;">
+                <i class="bi bi-arrow-right"></i> View All Feedback
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div style="margin-top: 3rem;">
+          <h2 class="section-subtitle">
+            <i class="bi bi-lightning-charge"></i>
+            Quick Actions
+          </h2>
+          <div class="quick-actions-grid">
+            <a href="{{ url_for('admin_approvals') }}" class="quick-action-card">
+              <div class="quick-action-icon">
+                <i class="bi bi-person-check"></i>
+              </div>
+              <h3>Review Approvals</h3>
+              <p>Approve or reject student registrations</p>
+              {% if pending_approvals > 0 %}
+              <span style="background: var(--primary); color: white; padding: 0.2rem 0.8rem; border-radius: 1rem; font-size: 0.75rem; margin-top: 0.5rem;">
+                {{ pending_approvals }} pending
+              </span>
+              {% endif %}
+            </a>
+            
+            <a href="{{ url_for('create_teacher') }}" class="quick-action-card">
+              <div class="quick-action-icon">
+                <i class="bi bi-person-plus"></i>
+              </div>
+              <h3>Add Teacher</h3>
+              <p>Create new teacher accounts</p>
+            </a>
+            
+            <a href="{{ url_for('admin_feedback') }}" class="quick-action-card">
+              <div class="quick-action-icon">
+                <i class="bi bi-chat"></i>
+              </div>
+              <h3>View Feedback</h3>
+              <p>See what users are saying</p>
+            </a>
+          </div>
+        </div>
+
+        <!-- Teachers List Section -->
+        <div style="margin-top: 3rem;">
+            <h2 class="section-subtitle">
+                <i class="bi bi-people"></i>
+                Teachers Management
+            </h2>
+            
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3><i class="bi bi-person-workspace"></i> All Teachers</h3>
+                    <span class="card-badge">{{ teachers|length }} total</span>
+                </div>
+                
+                {% if teachers %}
+                <div class="registration-list" style="max-height: 500px;">
+                    {% for teacher in teachers %}
+                    <div class="registration-item" id="teacher-{{ teacher.teacher_id }}">
+                        <div class="student-avatar">
+                            {{ teacher.first_name[0] }}{{ teacher.last_name[0] }}
+                        </div>
+                        <div class="student-details">
+                            <div class="student-name">
+                                {{ teacher.first_name }} {{ teacher.last_name }}
+                                <span class="student-grade">{{ teacher.subject }}</span>
+                            </div>
+                            <div class="student-meta">
+                                <span><i class="bi bi-envelope"></i> {{ teacher.email }}</span>
+                                <span><i class="bi bi-mortarboard"></i> Grades: {{ teacher.grade_levels }}</span>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <!-- Send Reset Password Button -->
+                            <button class="btn-icon" onclick="sendTeacherReset({{ teacher.teacher_id }})" 
+                                    title="Send password reset email" style="color: var(--primary);">
+                                <i class="bi bi-envelope-paper"></i>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state-small">
+                    <i class="bi bi-people"></i>
+                    <p>No teachers found</p>
+                    <a href="{{ url_for('create_teacher') }}" class="btn-primary" style="display: inline-block; width: auto; margin-top: 1rem;">
+                        <i class="bi bi-person-plus"></i> Add First Teacher
+                    </a>
+                </div>
+                {% endif %}
+                
+                <div style="margin-top: 1.5rem; text-align: right;">
+                    <a href="{{ url_for('create_teacher') }}" class="btn-primary" style="display: inline-block; width: auto; padding: 0.75rem 2rem;">
+                        <i class="bi bi-person-plus"></i> Add New Teacher
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Student Management Section - ALL Registered Students -->
+        <div style="margin-top: 3rem;">
+            <h2 class="section-subtitle">
+                <i class="bi bi-people"></i>
+                All Registered Students
+            </h2>
+            
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <h3><i class="bi bi-person-workspace"></i> Students</h3>
+                    <span class="card-badge">{{ students|length }} total</span>
+                </div>
+                
+                {% if students %}
+                <div class="registration-list" style="max-height: 500px;">
+                    {% for student in students %}
+                    <div class="registration-item" id="student-{{ student.student_id }}">
+                        <div class="student-avatar" style="background: 
+                            {% if student.status == 'approved' %}var(--success-light)
+                            {% elif student.status == 'rejected' %}var(--danger-light)
+                            {% else %}var(--warning-light){% endif %}; 
+                            color: 
+                            {% if student.status == 'approved' %}var(--success)
+                            {% elif student.status == 'rejected' %}var(--danger)
+                            {% else %}var(--warning){% endif %};">
+                            {{ student.first_name[0] }}{{ student.last_name[0] }}
+                        </div>
+                        <div class="student-details">
+                            <div class="student-name">
+                                {{ student.first_name }} {{ student.last_name }}
+                                <span class="student-grade">Grade {{ student.grade_level }}</span>
+                                {% if student.status == 'approved' %}
+                                    <span style="background: var(--success-light); color: var(--success); padding: 0.2rem 0.5rem; border-radius: 1rem; font-size: 0.7rem; margin-left: 0.5rem;">
+                                        <i class="bi bi-check-circle"></i> Approved
+                                    </span>
+                                {% elif student.status == 'rejected' %}
+                                    <span style="background: var(--danger-light); color: var(--danger); padding: 0.2rem 0.5rem; border-radius: 1rem; font-size: 0.7rem; margin-left: 0.5rem;">
+                                        <i class="bi bi-x-circle"></i> Rejected
+                                    </span>
+                                {% else %}
+                                    <span style="background: var(--warning-light); color: var(--warning); padding: 0.2rem 0.5rem; border-radius: 1rem; font-size: 0.7rem; margin-left: 0.5rem;">
+                                        <i class="bi bi-hourglass"></i> Pending
+                                    </span>
+                                {% endif %}
+                            </div>
+                            <div class="student-meta">
+                                <span><i class="bi bi-envelope"></i> {{ student.email }}</span>
+                                <span><i class="bi bi-calendar3"></i> Registered: {{ student.created_at.strftime('%b %d, %Y') }}</span>
+                            </div>
+                        </div>
+                        <!-- Optional: Quick action for pending students -->
+                        {% if student.status == 'pending' %}
+                        <div style="display: flex; gap: 0.5rem;">
+                            <a href="{{ url_for('admin_approvals') }}" class="btn-icon" style="color: var(--primary);" title="Go to Approvals">
+                                <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state-small">
+                    <i class="bi bi-people"></i>
+                    <p>No students found</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <i class="bi bi-book" aria-hidden="true"></i> EduPath
+          <p>Empowering high school students with quality online education and resources.</p>
+        </div>
+        <div>
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+            <li><a href="{{ url_for('admin_approvals') }}">Approvals</a></li>
+            <li><a href="{{ url_for('rate') }}">Feedback</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Contact</h4>
+          <ul>
+            <li><i class="bi bi-envelope"></i> info@edupath.com</li>
+            <li><i class="bi bi-telephone"></i> +(855) 123 456 789</li>
+            <li><i class="bi bi-geo-alt"></i> Phnom Penh, Cambodia</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">© 2026 EduPath. All rights reserved.</div>
+    </div>
+  </footer>
+
+</body>
+</html>

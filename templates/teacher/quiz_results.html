@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quiz Results - {{ quiz.title }} | EduPath</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/teacher/quiz_results.css') }}" /> 
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+</head>
+<body>
+  <header class="navbar">
+    <nav class="container">
+      <a href="{{ url_for('index') }}" class="logo">
+        <i class="bi bi-book"></i> EduPath
+      </a>
+      <ul class="nav-links">
+        <li><a href="{{ url_for('teacher_dashboard') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+      </ul>
+      <div class="user-info">
+        <i class="bi bi-person-circle"></i>
+        <span>{{ session.name }}</span>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <section class="section">
+      <div class="container">
+        <!-- Header -->
+        <div class="results-header">
+          <div class="results-header-content">
+            <div>
+              <h1>
+                {{ quiz.title }}
+                <span class="grade-badge">Grade {{ course.grade_level }}</span>
+              </h1>
+              <p>{{ course.name }} • Total Attempts: {{ attempts|length }}</p>
+            </div>
+            <a href="{{ url_for('teacher_dashboard') }}" class="back-btn">
+              <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+          </div>
+        </div>
+
+        {% if attempts %}
+          <!-- Calculate Stats -->
+          {% set total_attempts = attempts|length %}
+          {% set valid_scores = attempts|selectattr('percentage', '!=', None)|list %}
+          {% set avg_score = (valid_scores|sum(attribute='percentage') / valid_scores|length)|round(1) if valid_scores|length > 0 else 0 %}
+          {% set pass_count = valid_scores|selectattr('percentage', '>=', 60)|list|length %}
+          {% set pass_rate = (pass_count / total_attempts * 100)|round(1) if total_attempts > 0 else 0 %}
+          {% set highest_score = valid_scores|map(attribute='percentage')|max if valid_scores|length > 0 else 0 %}
+          {% set lowest_score = valid_scores|map(attribute='percentage')|min if valid_scores|length > 0 else 0 %}
+
+          <!-- Stats Cards -->
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value">{{ avg_score }}%</div>
+              <div class="stat-label">Average Score</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">{{ pass_rate }}%</div>
+              <div class="stat-label">Pass Rate (60%+)</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">{{ total_attempts }}</div>
+              <div class="stat-label">Total Attempts</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">{{ highest_score }}%</div>
+              <div class="stat-label">Highest Score</div>
+            </div>
+          </div>
+
+          <!-- Question Analysis -->
+          {% if questions and questions|length > 0 %}
+          <h2 class="section-title">
+            <i class="bi bi-pie-chart"></i> Question Analysis
+          </h2>
+          <div class="questions-grid">
+            {% for question in questions %}
+            <div class="question-card">
+              <span class="question-number">Question {{ loop.index }}</span>
+              <div class="question-text">{{ question.question }}</div>
+              
+              <div class="progress-container">
+                <div class="progress-header">
+                  <span>Correct</span>
+                  <span>{{ question.correct_percent|default(0) }}%</span>
+                </div>
+                <div class="progress-bar-bg">
+                  <div class="progress-fill" style="width: '{{ question.correct_percent|default(0) }}%';"></div>
+                </div>
+              </div>
+
+              <div class="answer-distribution">
+                {% for opt in ['A', 'B', 'C', 'D'] %}
+                  {% set opt_key = 'option_' + opt|lower %}
+                  {% if question[opt_key] %}
+                    <div class="answer-option {% if opt == question.correct_answer %}correct{% endif %}">
+                      <span class="letter">{{ opt }}</span>
+                      <span>{{ question.answer_counts[opt]|default(0) }}</span>
+                    </div>
+                  {% endif %}
+                {% endfor %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <!-- Student Results -->
+          <h2 class="section-title">
+            <i class="bi bi-people"></i> Student Results
+          </h2>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Student</th>
+                  <th>Grade</th>
+                  <th>Score</th>
+                  <th>Percentage</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for attempt in attempts %}
+                <tr>
+                  <td>
+                    <div class="student-info">
+                      <div class="student-avatar">{{ attempt.first_name[0] }}{{ attempt.last_name[0] }}</div>
+                      <div>{{ attempt.first_name }} {{ attempt.last_name }}</div>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="grade-badge" style="background: var(--primary-light); color: var(--primary);">
+                      Grade {{ attempt.student_grade }}
+                    </span>
+                  </td>
+                  <td>
+                    {% if attempt.score is not none and attempt.total_points is not none %}
+                      {{ attempt.score }}/{{ attempt.total_points }}
+                    {% else %}
+                      <span style="color: var(--muted-foreground);">Not available</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if attempt.percentage is not none %}
+                      <span class="score-badge 
+                        {% if attempt.percentage >= 70 %}score-high
+                        {% elif attempt.percentage >= 50 %}score-medium
+                        {% else %}score-low{% endif %}">
+                        {{ attempt.percentage }}%
+                      </span>
+                    {% else %}
+                      <span style="color: var(--muted-foreground);">N/A</span>
+                    {% endif %}
+                  </td>
+                  <td>{{ attempt.attempt_date.strftime('%Y-%m-%d %H:%M') if attempt.attempt_date else 'N/A' }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <!-- No Attempts -->
+          <div class="empty-state">
+            <i class="bi bi-clipboard-x"></i>
+            <h3>No Attempts Yet</h3>
+            <p class="text-muted">Students haven't taken this quiz yet.</p>
+            <a href="{{ url_for('teacher_dashboard') }}" class="back-btn" style="background: var(--primary); color: white; border: none; margin-top: 1rem;">
+              <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <i class="bi bi-book"></i> EduPath
+          <p>Empowering students through online education.</p>
+        </div>
+        <div>
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('teacher_dashboard') }}">Dashboard</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Contact</h4>
+          <ul>
+            <li>info@edupath.com</li>
+            <li>+(855) 123 456 789</li>
+            <li>Phnom Penh, Cambodia</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">© 2026 EduPath. All rights reserved.</div>
+    </div>
+  </footer>
+</body>
+</html>

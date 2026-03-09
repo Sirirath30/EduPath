@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Preview: {{ material.title }} - EduPath</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/teacher/material_preview.css') }}" /> 
+  
+</head>
+<body>
+  <div class="container">
+    <div class="preview-header">
+      <div>
+        <h1>{{ material.title }}</h1>
+        <p style="opacity:0.9; margin:0;">{{ course.name }} • Preview Mode</p>
+      </div>
+      <a href="{{ url_for('teacher_dashboard') }}" class="back-btn">
+        <i class="bi bi-arrow-left"></i> Back to Dashboard
+      </a>
+    </div>
+
+    <div class="material-card">
+      <p><strong>Type:</strong> {{ material.type|replace('_', ' ')|title }}</p>
+      <p><strong>Uploaded:</strong> {{ material.upload_date.strftime('%B %d, %Y') if material.upload_date else 'Recently' }}</p>
+
+      {% if material.type == 'video' or material.type == 'video_with_quiz' %}
+        <div class="video-container">
+          <video controls controlsList="nodownload">
+            <source src="{{ url_for('static', filename='uploads/' + material.file_path) }}" type="video/mp4">
+          </video>
+        </div>
+        {% if material.type == 'video_with_quiz' and material.questions %}
+          <div style="margin-top:2rem;">
+            <h3>Quiz Questions ({{ material.questions|length }})</h3>
+            {% for q in material.questions %}
+            <div style="background:var(--primary-light); padding:1rem; border-radius:var(--radius); margin-bottom:1rem;">
+              <p><strong>At {{ q.timestamp_seconds }}s:</strong> {{ q.question }}</p>
+              <p>A: {{ q.option_a }} • B: {{ q.option_b }} • C: {{ q.option_c }} • D: {{ q.option_d }}</p>
+              <p>Correct: {{ q.correct_answer }}</p>
+            </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% elif material.type == 'document' %}
+        <div class="document-viewer">
+          <div class="document-icon"><i class="bi bi-file-pdf"></i></div>
+          <h3>{{ material.title }}</h3>
+          <a href="{{ url_for('static', filename='uploads/' + material.file_path) }}" target="_blank" class="btn-primary">
+            <i class="bi bi-eye"></i> Open Document
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Dashboard - EduPath</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/student/dashboard.css') }}" />
+  <script src="{{ url_for('static', filename='js/core/shared.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/notification.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/mobile-menu.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/password-handler.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/form-validator.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/pages/student/dashboard.js') }}"></script>
+
+ 
+</head>
+<body>
+  <header class="navbar">
+    <nav class="container">
+      <a href="{{ url_for('index') }}" class="logo">
+        <i class="bi bi-book"></i> EduPath
+      </a>
+      <ul class="nav-links">
+        <li><a href="{{ url_for('student_dashboard') }}" class="active">Dashboard</a></li>
+        <li><a href="#courses">My Courses</a></li>
+        <li><a href="#quizzes">Quizzes</a></li>
+        <li><a href="#grades">Grades</a></li>
+        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+      </ul>
+      <div class="user-info">
+        <i class="bi bi-person-circle"></i>
+        <span>{{ session.name }}</span>
+        <span class="grade-badge" style="background: var(--primary-light); color: var(--primary); padding: 0.2rem 0.8rem; border-radius: 20px; font-size: 0.8rem; border: 1px solid rgba(0,0,0,0.05);">Grade {{ student_grade }}</span>
+      </div>
+      <button class="mobile-toggle" onclick="toggleMenu()">☰</button>
+    </nav>
+    <div class="mobile-menu" id="mobileMenu" hidden>
+      <a href="{{ url_for('student_dashboard') }}" class="active">Dashboard</a>
+      <a href="#courses">My Courses</a>
+      <a href="#quizzes">Quizzes</a>
+      <a href="#grades">Grades</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="section">
+      <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()">×</button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <div class="welcome-header">
+          <div>
+            <h1>Welcome back, {{ session.name }}! 👋</h1>
+            <p>Continue your learning journey in Grade {{ student_grade }}</p>
+          </div>
+          <div class="grade-badge">
+            <i class="bi bi-mortarboard"></i> Grade {{ student_grade }} Student
+          </div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card-modern">
+            <div class="stat-icon-circle brand-red">
+              <i class="bi bi-book"></i>
+            </div>
+            <div class="stat-content">
+              <h3>{{ stats.enrolled_courses }}</h3>
+              <p>Enrolled Courses</p>
+            </div>
+          </div>
+          
+          <div class="stat-card-modern">
+            <div class="stat-icon-circle green">
+              <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="stat-content">
+              <h3>{{ stats.avg_progress }}%</h3>
+              <p>Average Progress</p>
+            </div>
+          </div>
+          
+          <div class="stat-card-modern">
+            <div class="stat-icon-circle orange">
+              <i class="bi bi-trophy"></i>
+            </div>
+            <div class="stat-content">
+              <h3>{{ stats.avg_grade }}</h3>
+              <p>Average Grade</p>
+            </div>
+          </div>
+          
+          <div class="stat-card-modern">
+            <div class="stat-icon-circle purple">
+              <i class="bi bi-clock"></i>
+            </div>
+            <div class="stat-content">
+              <h3>{{ stats.study_hours }}h</h3>
+              <p>Study Time</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="courses" class="section-header">
+          <h2 class="section-title">My Courses</h2>
+          <a href="#all-courses" class="view-all">View All <i class="bi bi-arrow-right"></i></a>
+        </div>
+
+        {% if enrolled_courses %}
+          <div class="course-grid">
+            {% for course in enrolled_courses %}
+            <div class="course-card-enhanced">
+              <div class="course-image">
+                <h3 style="color: white; margin: 0;">{{ course.name }}</h3>
+                <span class="course-code-badge">{{ course.code }}</span>
+                <div class="teacher-info">
+                  <i class="bi bi-person-circle"></i>
+                  <span>{{ course.teacher_name or 'Mr. Sokha Kim' }}</span>
+                </div>
+              </div>
+              
+              <div class="course-body">
+                <div class="course-meta">
+                  <span><i class="bi bi-file-text"></i> {{ course.total_materials }} Lessons</span>
+                  <span><i class="bi bi-pencil"></i> {{ course.completed_quizzes }}/{{ course.total_quizzes }} Quizzes</span>
+                </div>
+
+                <div class="progress-section">
+                  <div class="progress-header">
+                    <span>Overall Progress</span>
+                    <span>{{ course.progress }}%</span>
+                  </div>
+                  <div class="progress-bar-modern">
+                    <div class="progress-fill-modern" style="width: '{{ course.progress }}%'"></div>
+                  </div>
+                </div>
+
+                {% if course.next_activity %}
+                <div class="next-class">
+                  <div class="next-class-icon">
+                    <i class="bi bi-play-fill"></i>
+                  </div>
+                  <div class="next-class-details">
+                    <h4>{{ course.next_activity.title }}</h4>
+                    <p>{{ course.next_activity.type }} • Continue where you left off</p>
+                  </div>
+                  <a href="{{ url_for('view_course', course_id=course.id) }}" class="continue-btn">
+                    Continue
+                  </a>
+                </div>
+                {% else %}
+                <a href="{{ url_for('view_course', course_id=course.id) }}" class="continue-btn" style="width: 100%; text-align: center; margin-top: 1rem;">
+                  <i class="bi bi-play-circle"></i> Start Learning
+                </a>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="form-card text-center" style="padding: 4rem 2rem;">
+            <i class="bi bi-journal-x" style="font-size: 3.5rem; color: var(--border); margin-bottom: 1rem; display: block;"></i>
+            <h3 style="margin-bottom: 0.5rem; color: var(--text-main);">No Courses Yet</h3>
+            <p style="color: var(--muted-foreground);">You haven't enrolled in any courses yet. Browse available courses below to get started!</p>
+          </div>
+        {% endif %}
+
+        {% if available_courses %}
+          <div class="section-header" style="margin-top: 4rem;">
+            <h2 class="section-title">Available for You</h2>
+            <span class="view-all" style="cursor: default;">{{ available_courses|length }} Courses</span>
+          </div>
+          
+          <div class="course-grid">
+            {% for course in available_courses %}
+            <div class="course-card-enhanced">
+              <div class="course-image green-theme">
+                <h3 style="color: white; margin: 0;">{{ course.name }}</h3>
+                <span class="course-code-badge">{{ course.code }}</span>
+                <div class="teacher-info">
+                  <i class="bi bi-person-circle"></i>
+                  <span>{{ course.teacher_name or 'Mr. Sokha Kim' }}</span>
+                </div>
+              </div>
+              
+              <div class="course-body">
+                <p style="color: var(--muted-foreground); font-size: 0.9rem; margin-bottom: 1.5rem; flex-grow: 1;">
+                  {{ course.description|truncate(100) }}
+                </p>
+                
+                <div class="course-meta">
+                  <span><i class="bi bi-people" style="color: var(--success);"></i> {{ course.student_count }} Students</span>
+                  <span><i class="bi bi-file-text" style="color: var(--success);"></i> {{ course.material_count }} Materials</span>
+                </div>
+
+                <a href="{{ url_for('enroll_course', course_id=course.id) }}" class="continue-btn btn-success" style="width: 100%; text-align: center; margin-top: auto;">
+                  <i class="bi bi-plus-circle"></i> Enroll Now
+                </a>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        {% if upcoming_quizzes %}
+          <div id="quizzes" class="section-header" style="margin-top: 4rem;">
+            <h2 class="section-title">Upcoming Quizzes</h2>
+          </div>
+          <div class="form-card">
+            <div style="display: grid; gap: 1rem;">
+              {% for quiz in upcoming_quizzes %}
+              <div class="quiz-row">
+                <div>
+                  <h4 style="margin: 0 0 0.25rem 0; color: var(--text-main);">{{ quiz.title }}</h4>
+                  <p style="margin: 0; font-size: 0.85rem; color: var(--muted-foreground);">
+                    <i class="bi bi-book me-1"></i> {{ quiz.course_name }} &bull; 
+                    <i class="bi bi-calendar me-1"></i> Due: {{ quiz.due_date.strftime('%Y-%m-%d') }}
+                  </p>
+                </div>
+                <a href="{{ url_for('take_quiz', quiz_id=quiz.id) }}" class="btn-primary" style="white-space: nowrap;">
+                  <i class="bi bi-pencil"></i> Take Quiz
+                </a>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+        <div id="grades" class="section-header" style="margin-top: 4rem;">
+          <h2 class="section-title">Recent Grades</h2>
+          <a href="#" class="view-all">View All <i class="bi bi-arrow-right"></i></a>
+        </div>
+
+        {% if recent_grades %}
+          <div class="form-card" style="padding: 0; overflow: hidden;">
+            <div style="overflow-x: auto;">
+              <table class="grade-table">
+                <thead>
+                  <tr>
+                    <th>Course</th>
+                    <th>Assessment</th>
+                    <th>Score</th>
+                    <th>Grade</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  {% for grade in recent_grades %}
+                  {% set percentage = grade.percentage|int if grade.percentage is not none else 0 %}
+
+                    {% if percentage >= 90 %}
+                        {% set letter_grade = 'A' %}
+                        {% set grade_class = 'grade-a' %}
+                    {% elif percentage >= 80 %}
+                        {% set letter_grade = 'B' %}
+                        {% set grade_class = 'grade-b' %}
+                    {% elif percentage >= 70 %}
+                        {% set letter_grade = 'C' %}
+                        {% set grade_class = 'grade-c' %}
+                    {% elif percentage >= 60 %}
+                        {% set letter_grade = 'D' %}
+                        {% set grade_class = 'grade-d' %}
+                    {% else %}
+                        {% set letter_grade = 'F' %}
+                        {% set grade_class = 'grade-f' %}
+                    {% endif %}
+                    
+                    <tr>
+                        <td>{{ grade.course_name }}</td>
+                        <td>{{ grade.assessment_type }}</td>
+                        <td>{{ grade.score }}/{{ grade.max_score }}</td>
+                        <td><span class="grade-badge {{ grade_class }}">{{ letter_grade }} ({{ grade.percentage }}%)</span></td>
+                        <td>{{ grade.date.strftime('%Y-%m-%d') }}</td>
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        {% else %}
+          <div class="form-card text-center" style="padding: 4rem 2rem;">
+            <div style="width: 4rem; height: 4rem; background: var(--secondary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
+              <i class="bi bi-clipboard2-x" style="font-size: 2rem; color: var(--muted-foreground);"></i>
+            </div>
+            <h3 style="margin-bottom: 0.5rem; color: var(--text-main);">No Grades Yet</h3>
+            <p style="color: var(--muted-foreground);">Complete quizzes and assignments to see your performance here.</p>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <i class="bi bi-book" aria-hidden="true"></i> EduPath
+          <p>Empowering high school students with quality online education and resources.</p>
+        </div>
+        <div>
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('student_dashboard') }}">Dashboard</a></li>
+            <li><a href="#courses">My Courses</a></li>
+            <li><a href="#grades">Grades</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Contact</h4>
+          <ul>
+            <li>info@edupath.com</li>
+            <li>+(855) 123 456 789</li>
+            <li>Phnom Penh, Cambodia</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">© 2026 EduPath. All rights reserved.</div>
+    </div>
+  </footer>
+
+</body>
+</html>

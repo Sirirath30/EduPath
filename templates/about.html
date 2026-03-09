@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About Us - EduPath</title>
+  <meta name="description" content="Learn about EduPath's mission to provide quality education to every high school student." />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <script src="{{ url_for('static', filename='js/core/shared.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/notification.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/mobile-menu.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/password-handler.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/form-validator.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/pages/about.js') }}"></script>
+  
+</head>
+<body>
+  <header class="navbar">
+    <nav class="container">
+      <a href="templates/index.html" class="logo">
+        <i class="bi bi-book"></i> EduPath
+      </a>
+      <ul class="nav-links">
+        <li><a href="{{ url_for('index') }}">Home</a></li>
+        <li><a href="{{ url_for('register') }}">Register</a></li>
+        <li><a href="{{ url_for('about') }}" class="active">About Us</a></li>
+        <li><a href="{{ url_for('rate') }}">Rate Us</a></li>
+      </ul>
+      <button class="mobile-toggle" onclick="toggleMenu()">☰</button>
+    </nav>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="{{ url_for('index') }}">Home</a>
+      <a href="{{ url_for('register') }}">Register</a>
+      <a href="{{ url_for('about') }}" class="active">About Us</a>
+      <a href="{{ url_for('rate') }}">Rate Us</a>
+    </div>
+  </header>
+  <main>
+    <section class="section">
+      <div class="container">
+        <div class="text-center" style="margin-bottom: 3.5rem;">
+          <h1 class="section-title">About EduPath</h1>
+          <p class="section-subtitle" style="margin-bottom: 0;">We believe every high school student deserves access to quality education. EduPath was built to bridge the gap between traditional schooling and modern, flexible learning.</p>
+        </div>
+        <div class="founder-card">
+          <div class="flex">
+            <img src="{{ url_for('static', filename='images/photo.jpeg') }}"alt="Mr. Samith Sirirath, Founder" />
+            <div class="founder-info">
+              <p class="tag">Founder & Director</p>
+              <h2>Mr. Samith Sirirath</h2>
+              <p>With extensive experience in international education, Mr. Sirirath founded EduPath with a vision to make high-quality learning accessible to every student. He holds a Bachelor’s degree in Software Engineering and a Master’s degree in Cybersecurity from England. With a strong passion for technology and education, he is committed to integrating innovative solutions that enhance learning opportunities and empower students to achieve their full potential.</p>
+              <p>"Technology can level the playing field, and that's what EduPath is all about."</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <section class="section-alt">
+      <div class="container">
+        <h2 class="section-title text-center" style="margin-bottom: 2.5rem;">Get in Touch</h2>
+        <div class="contact-grid">
+          <div class="contact-card">
+            <div class="contact-icon"><i class="bi bi-envelope"></i></div>
+            <h3>Email</h3>
+            <p>info@edupath.com</p>
+          </div>
+          <div class="contact-card">
+            <div class="contact-icon"><i class="bi bi-telephone"></i></div>
+            <h3>Phone</h3>
+            <p>+(855) 123 456 789</p>
+          </div>
+          <div class="contact-card">
+            <div class="contact-icon"><i class="bi bi-geo-alt"></i></div>
+            <h3>Address</h3>
+            <p>Phnom Penh, Cambodia</p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div>
+          <i class="bi bi-book"></i> EduPath
+          <p>Empowering high school students with quality online education and resources.</p>
+        </div>
+        <div>
+          <h4>Quick Links</h4>
+          <ul>
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('register') }}">Register</a></li>
+            <li><a href="{{ url_for('about') }}">About Us</a></li>
+            <li><a href="{{ url_for('rate') }}">Rate Us</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4>Contact</h4>
+          <ul>
+            <li>info@edupath.com</li>
+            <li>+(855) 123 456 789</li>
+            <li>Phnom Penh, Cambodia</li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">© 2026 EduPath. All rights reserved.</div>
+    </div>
+  </footer>
+</body>
+</html>

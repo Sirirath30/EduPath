@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ course.name }} - Lessons | EduPath</title>
+
+  <!-- Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/student/course_lessons.css') }}" /> 
+  <script src="{{ url_for('static', filename='js/core/shared.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/notification.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/mobile-menu.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/password-handler.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/form-validator.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/pages/student/course-lessons.js') }}"></script>
+
+
+</head>
+<body>
+
+<!-- NAVBAR -->
+<header class="navbar">
+  <nav class="container">
+    <a href="{{ url_for('index') }}" class="logo" style="font-weight:bold; color:var(--primary); text-decoration:none;">
+      <i class="bi bi-book"></i> EduPath
+    </a>
+    <ul class="nav-links" style="display:flex; gap:1.5rem; list-style:none; margin:0;">
+      <li><a href="{{ url_for('student_dashboard') }}" style="text-decoration:none; color:var(--text-main);">Dashboard</a></li>
+      <li><a href="{{ url_for('student_dashboard') }}#courses" style="text-decoration:none; color:var(--text-main);">My Courses</a></li>
+      <li><a href="{{ url_for('logout') }}" style="text-decoration:none; color:var(--text-main);">Logout</a></li>
+    </ul>
+  </nav>
+</header>
+
+<!-- MAIN CONTENT -->
+<main>
+  <section class="section" style="padding: 2.5rem 0;">
+    <div class="container">
+
+      <!-- PAGE HEADER -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
+        <div>
+          <h1 class="section-title">{{ course.name }}</h1>
+          <p class="text-muted">Teacher: {{ course.teacher_name or 'TBA' }}</p>
+        </div>
+        <a href="{{ url_for('student_dashboard') }}" class="btn-secondary">← Back to Dashboard</a>
+      </div>
+
+      <!-- COURSE PROGRESS -->
+      <div class="form-card" style="margin-bottom:2rem;">
+        <h3 style="margin-top:0; margin-bottom:1rem;">Your Progress</h3>
+
+        <div class="progress-container">
+          <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ progress }}%;"></div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; margin-top:0.5rem;">
+            <span>{{ completed_lessons }}/{{ total_lessons }} lessons completed</span>
+            <span>{{ progress }}% Complete</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LESSONS -->
+      <h2>Course Lessons</h2>
+
+      {% if lessons %}
+        {% for lesson in lessons %}
+        <div class="lesson-card">
+
+          <!-- LESSON HEADER -->
+          <div class="lesson-header" onclick="toggleLesson('{{ lesson.id }}')">
+            <div style="display:flex; align-items:center; gap:1rem;">
+              <div class="lesson-status {% if lesson.completed %}status-completed{% else %}status-incomplete{% endif %}">
+                <i class="bi bi-{% if lesson.completed %}check-lg{% else %}play-fill{% endif %}"></i>
+              </div>
+
+              <div>
+                <h3 style="margin:0;">Lesson {{ loop.index }}: {{ lesson.title }}</h3>
+                {% if lesson.description %}
+                <small class="text-muted">{{ lesson.description }}</small>
+                {% endif %}
+              </div>
+            </div>
+
+            <i class="bi bi-chevron-down" id="chevron-{{ lesson.id }}"></i>
+          </div>
+
+          <!-- LESSON CONTENT -->
+          <div class="lesson-content" id="lesson-{{ lesson.id }}">
+
+            {% if lesson.video %}
+            <a href="{{ url_for('watch_lesson_video', lesson_id=lesson.id) }}" class="material-link">
+              <i class="bi bi-play-circle-fill"></i>
+              <div style="flex:1;">
+                <h4 style="margin:0;">{{ lesson.video.title }}</h4>
+                <small class="text-muted">Video Lesson</small>
+              </div>
+              {% if lesson.video.has_quiz %}
+              <span class="quiz-info"><i class="bi bi-pencil"></i> Includes Quiz</span>
+              {% endif %}
+            </a>
+            {% endif %}
+
+            {% if lesson.document %}
+            <a href="{{ url_for('static', filename='uploads/' + lesson.document.file_path) }}"
+               target="_blank" class="material-link">
+              <i class="bi bi-file-text-fill"></i>
+              <div style="flex:1;">
+                <h4 style="margin:0;">{{ lesson.document.title }}</h4>
+                <small class="text-muted">Document</small>
+              </div>
+            </a>
+            {% endif %}
+
+            {% if lesson.quiz %}
+            <a href="{{ url_for('take_lesson_quiz', lesson_id=lesson.id) }}" class="material-link">
+              <i class="bi bi-pencil-fill"></i>
+              <div style="flex:1;">
+                <h4 style="margin:0;">{{ lesson.quiz.title }}</h4>
+                <small class="text-muted">
+                  Quiz • {{ lesson.quiz.questions|length }} questions • {{ lesson.quiz.time_limit or 30 }} min
+                </small>
+              </div>
+              {% if lesson.quiz.completed %}
+              <span class="quiz-info"><i class="bi bi-check-lg"></i> Completed</span>
+              {% endif %}
+            </a>
+            {% endif %}
+
+            {% if not lesson.completed %}
+            <button class="btn-primary"
+                    style="margin-top:1rem; width:100%;"
+                    onclick="event.stopPropagation(); markLessonComplete('{{ lesson.id }}')">
+              <i class="bi bi-check-lg"></i> Mark Lesson as Complete
+            </button>
+            {% endif %}
+
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="form-card" style="text-align:center; padding:3rem;">
+          <i class="bi bi-journal" style="font-size:3rem; color:var(--muted-foreground);"></i>
+          <h3>No Lessons Yet</h3>
+          <p class="text-muted">This course doesn't have any lessons yet.</p>
+        </div>
+      {% endif %}
+
+    </div>
+  </section>
+</main>
+
+</body>
+</html>

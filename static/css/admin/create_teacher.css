@@ -1,0 +1,61 @@
+   /* Grade checkbox styles */
+    .grade-checkbox-group {
+      display: flex;
+      gap: 2rem;
+      margin-top: 0.5rem;
+      padding: 0.5rem 0;
+    }
+
+    .grade-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .grade-checkbox input[type="checkbox"] {
+      width: 1.2rem;
+      height: 1.2rem;
+      cursor: pointer;
+      accent-color: var(--primary);
+    }
+
+    .grade-checkbox:hover {
+      color: var(--primary);
+    }
+
+    .help-text {
+      font-size: 0.85rem;
+      color: var(--muted-foreground);
+      margin-top: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .help-text i {
+      color: var(--primary);
+    }
+
+    .form-card {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+      
+      .grade-checkbox-group {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+    }

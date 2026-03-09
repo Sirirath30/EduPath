@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ course.name }} - Course Details | EduPath</title>
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/student/course_details.css') }}" /> 
+  <script src="{{ url_for('static', filename='js/core/shared.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/notification.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/mobile-menu.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/password-handler.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/form-validator.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/pages/student/course-details.js') }}"></script>
+  
+
+</head>
+<body>
+  <header class="navbar">
+    <nav class="navbar-container">
+      <a href="{{ url_for('index') }}" class="logo">
+        <i class="bi bi-book"></i> EduPath
+      </a>
+      <ul class="nav-links">
+        <li><a href="{{ url_for('student_dashboard') }}" class="nav-link-item">Dashboard</a></li>
+        <li><a href="{{ url_for('student_dashboard') }}#courses" class="nav-link-item">My Courses</a></li>
+        <li><a href="{{ url_for('student_dashboard') }}#grades" class="nav-link-item">Grades</a></li>
+        <li><a href="{{ url_for('logout') }}" class="nav-link-item">Logout</a></li>
+      </ul>
+      <div class="user-info">
+        <i class="bi bi-person-circle user-icon"></i>
+        <span>{{ session.get('name', 'Student') }}</span>
+      </div>
+      <button class="mobile-toggle" onclick="toggleMenu()">☰</button>
+    </nav>
+    <div class="mobile-menu" id="mobileMenu" hidden>
+      <a href="{{ url_for('student_dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('student_dashboard') }}#courses">My Courses</a>
+      <a href="{{ url_for('student_dashboard') }}#grades">Grades</a>
+      <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+  </header>
+
+  <main>
+    <section class="section-padding">
+      <div class="main-container">
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()">×</button>
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <div class="course-header">
+          <div class="course-header-top">
+            <div>
+              <h1>{{ course.name }}</h1>
+              <p class="course-desc">{{ course.description }}</p>
+            </div>
+            <a href="{{ url_for('student_dashboard') }}" class="btn-secondary btn-back">
+              <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+          </div>
+          
+          <div class="course-meta">
+            <span><i class="bi bi-person"></i> Instructor: {{ course.teacher_name or 'TBA' }}</span>
+            <span><i class="bi bi-code"></i> Course Code: {{ course.code }}</span>
+            <span><i class="bi bi-calendar"></i> Started: {% if course.created_at %}{{ course.created_at.strftime('%B %d, %Y') }}{% else %}N/A{% endif %}</span>
+          </div>
+        </div>
+
+        <div class="card-container progress-card">
+          <div class="progress-header">
+            <h3>Your Learning Progress</h3>
+            <span class="badge badge-lg 
+              {% if progress|int == 100 %}badge-success{% else %}badge-warning{% endif %}">
+              {{ progress|int }}% Complete
+            </span>
+          </div>
+          
+          <div class="progress-bar-track">
+            <div class="progress-fill" style="width: '{{ progress }}%';"></div>
+          </div>
+
+          <div class="progress-stats">
+            <div class="stat-item">
+              <div class="stat-value">{{ completed }}</div>
+              <div class="stat-label">Lessons Completed</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">{{ total }}</div>
+              <div class="stat-label">Total Lessons</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">{{ quizzes_taken }}</div>
+              <div class="stat-label">Quizzes Taken</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">{{ total_quizzes }}</div>
+              <div class="stat-label">Total Quizzes</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title-with-icon">
+          <i class="bi bi-grid-3x3-gap-fill"></i>
+          <h2>Course Materials</h2>
+        </div>
+
+        {% if materials %}
+          <div class="materials-grid">
+            {% for material in materials %}
+              <div class="material-card" id="material-{{ material.id }}">
+                <div class="material-card-header" onclick="toggleMaterial('{{ material.id }}')">
+                  <span class="material-type-badge">
+                    {% if material.type == 'video' %}VIDEO
+                    {% elif material.type == 'video_with_quiz' %}VIDEO + QUIZ
+                    {% elif material.type == 'document' %}DOCUMENT
+                    {% elif material.type == 'quiz' %}QUIZ
+                    {% else %}ASSESSMENT{% endif %}
+                  </span>
+                  <i class="bi 
+                    {% if material.type == 'video' or material.type == 'video_with_quiz' %}bi-camera-reel-fill
+                    {% elif material.type == 'document' %}bi-file-earmark-text-fill
+                    {% elif material.type == 'quiz' %}bi-ui-checks
+                    {% else %}bi-bar-chart-fill{% endif %}" 
+                    style="font-size: 1.8rem;"></i>
+                  <h3>{{ material.title }}</h3>
+                  <div style="position: absolute; bottom: 0.5rem; right: 1rem; color: rgba(255,255,255,0.8); font-size: 0.8rem;">
+                    <i class="bi bi-chevron-down"></i> Click to expand
+                  </div>
+                </div>
+                
+                <div class="material-card-body" id="content-{{ material.id }}" style="display: none;">
+                  <div class="material-meta">
+                    <span><i class="bi bi-clock"></i> {% if material.upload_date %}{{ material.upload_date.strftime('%b %d, %Y') }}{% else %}Recently{% endif %}</span>
+                    {% if material.completed %}
+                      <span class="badge badge-success"><i class="bi bi-check-circle-fill"></i> Completed</span>
+                    {% else %}
+                      <span class="badge badge-warning"><i class="bi bi-hourglass-split"></i> Pending</span>
+                    {% endif %}
+                  </div>
+
+                  <!-- Quiz info for videos/documents that have quizzes -->
+                  {% if material.quiz %}
+                  <div class="quiz-info">
+                    <h4><i class="bi bi-question-circle"></i> {{ material.quiz.title }}</h4>
+                    <div class="quiz-questions">
+                      <i class="bi bi-list-check"></i> {{ material.quiz.questions|length }} questions
+                      {% if material.quiz.time_limit %} • <i class="bi bi-stopwatch"></i> {{ material.quiz.time_limit }} min{% endif %}
+                    </div>
+                    <div class="quiz-actions">
+                      {% if material.quiz.attempt_id %}
+                        <span class="btn-quiz completed"><i class="bi bi-check-circle"></i> Completed ({{ material.quiz.percentage }}%)</span>
+                      {% else %}
+                        <a href="{{ url_for('take_quiz', quiz_id=material.quiz.id) }}?course_id={{ course.id }}" class="btn-quiz">
+                          <i class="bi bi-pencil"></i> Take Quiz
+                        </a>
+                      {% endif %}
+                    </div>
+                  </div>
+                  {% endif %}
+
+                  <!-- Content based on material type -->
+                  {% if material.type == 'video' %}
+                    <div class="video-player-container">
+                      <video id="video-{{ material.id }}" controls controlsList="nodownload" oncontextmenu="return false;">
+                        <source src="{{ url_for('static', filename='uploads/' + material.file_path) }}" type="video/mp4">
+                        Your browser does not support the video tag.
+                      </video>
+                      <div class="video-controls-overlay">
+                        <small><i class="bi bi-info-circle"></i> Right-click disabled</small>
+                        {% if not material.completed %}
+                          <button class="btn-primary btn-sm" onclick="completeMaterial('{{ material.id }}')">
+                            <i class="bi bi-check"></i> Mark as Watched
+                          </button>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                  {% elif material.type == 'video_with_quiz' %}
+                    <div class="video-player-container">
+                      <video id="video-{{ material.id }}" 
+                             data-material-id="{{ material.id }}"
+                             data-questions='{{ material.questions|tojson }}'
+                             controls 
+                             controlsList="nodownload" 
+                             oncontextmenu="return false;"
+                             class="interactive-video">
+                        <source src="{{ url_for('static', filename='uploads/' + material.file_path) }}" type="video/mp4">
+                      </video>
+                      <div class="video-controls-overlay">
+                        <small><i class="bi bi-question-circle"></i> {{ material.questions|length }} questions in this video</small>
+                        {% if not material.completed %}
+                          <button class="btn-primary btn-sm" onclick="completeMaterial('{{ material.id }}')">
+                            <i class="bi bi-check"></i> Mark as Completed
+                          </button>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                  {% elif material.type == 'document' %}
+                    <div class="document-viewer">
+                      <div class="document-icon-large">
+                        <i class="bi bi-file-pdf"></i>
+                      </div>
+                      <h4>{{ material.title }}</h4>
+                      <p class="text-muted" style="margin: 1rem 0;">This document will open in a new tab for reading.</p>
+                      <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <a href="{{ url_for('static', filename='uploads/' + material.file_path) }}" 
+                           target="_blank" 
+                           class="btn-primary"
+                           onclick="return confirm('Document will open in a new tab.')">
+                          <i class="bi bi-eye"></i> Read Online
+                        </a>
+                        {% if not material.completed %}
+                          <button class="btn-secondary" onclick="completeMaterial('{{ material.id }}')">
+                            <i class="bi bi-check"></i> Mark as Read
+                          </button>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                  {% elif material.type == 'quiz' %}
+                    <div class="document-viewer">
+                      <div class="document-icon-large">
+                        <i class="bi bi-pencil-square"></i>
+                      </div>
+                      <h4>{{ material.title }}</h4>
+                      <p class="text-muted">{{ material.description if material.description else 'Test your knowledge with this quiz.' }}</p>
+                      {% if not material.completed %}
+                        <a href="{{ url_for('take_quiz', quiz_id=material.id) }}?course_id={{ course.id }}" class="btn-primary">
+                          <i class="bi bi-pencil"></i> Start Quiz
+                        </a>
+                      {% else %}
+                        <span class="badge badge-success"><i class="bi bi-check-circle"></i> Completed</span>
+                      {% endif %}
+                    </div>
+
+                  {% else %}
+                    <div class="document-viewer">
+                      <div class="document-icon-large">
+                        <i class="bi bi-bar-chart"></i>
+                      </div>
+                      <h4>{{ material.title }}</h4>
+                      <p class="text-muted">Assessment material for this course.</p>
+                      {% if not material.completed %}
+                        <button class="btn-primary" onclick="completeMaterial('{{ material.id }}')">
+                          <i class="bi bi-check"></i> Mark as Complete
+                        </button>
+                      {% endif %}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="card-container empty-state-card">
+            <i class="bi bi-folder2-open empty-icon"></i>
+            <h3>No Materials Yet</h3>
+            <p class="text-muted">The instructor hasn't added any materials to this course yet.</p>
+          </div>
+        {% endif %}
+
+        <div class="section-title-with-icon mt-3">
+          <i class="bi bi-pencil-square"></i>
+          <h2>Course Quizzes</h2>
+        </div>
+
+        {% if quizzes %}
+          <div class="card-container">
+            {% for quiz in quizzes %}
+              <div class="quiz-list-item">
+                <div>
+                  <h4>{{ quiz.title }}</h4>
+                  <small class="text-muted">
+                    <i class="bi bi-stopwatch"></i> {{ quiz.time_limit or 'No' }} minutes &bull; 
+                    <i class="bi bi-calendar3"></i> Due: {% if quiz.due_date %}{{ quiz.due_date.strftime('%Y-%m-%d') }}{% else %}No due date{% endif %}
+                  </small>
+                </div>
+                <div>
+                  {% if quiz.attempt_id %}
+                    <span class="badge badge-success">
+                      <i class="bi bi-check-circle-fill"></i> Completed ({{ quiz.percentage }}%)
+                    </span>
+                  {% else %}
+                    <a href="{{ url_for('take_quiz', quiz_id=quiz.id) }}?course_id={{ course.id }}" class="btn-primary btn-sm">
+                      <i class="bi bi-pencil"></i> Take Quiz
+                    </a>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="card-container empty-state-card">
+            <p class="text-muted">No quizzes available for this course yet.</p>
+          </div>
+        {% endif %}
+
+        <div class="section-title-with-icon mt-3">
+          <i class="bi bi-trophy-fill"></i>
+          <h2>Your Grades</h2>
+        </div>
+
+        {% if grades %}
+          <div class="table-card">
+            <table class="grades-table">
+              <thead>
+                <tr>
+                  <th>Assessment</th>
+                  <th>Score</th>
+                  <th>Percentage</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for grade in grades %}
+                {% set percentage = grade.percentage|int if grade.percentage is not none else 0 %}
+                <tr>
+                  <td class="font-medium">{{ grade.assessment_type }}</td>
+                  <td>{{ grade.score }}/{{ grade.max_score }}</td>
+                  
+                  {% if percentage >= 80 %}
+                    {% set bar_color = 'var(--success)' %}
+                    {% set status_class = 'badge-success' %}
+                    {% set status_text = 'Excellent' %}
+                  {% elif percentage >= 60 %}
+                    {% set bar_color = 'var(--warning)' %}
+                    {% set status_class = 'badge-warning' %}
+                    {% set status_text = 'Good' %}
+                  {% else %}
+                    {% set bar_color = 'var(--danger)' %}
+                    {% set status_class = 'badge-danger' %}
+                    {% set status_text = 'Needs Improvement' %}
+                  {% endif %}
+
+                  <td>
+                    <div class="grade-progress-container">
+                      <span class="grade-percent-text">{{ percentage }}%</span>
+                      <div class="grade-progress-track">
+                        <div class="grade-progress-fill" style="width: '{{ percentage }}%'; background-color: '{{ bar_color }};'"></div>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td class="text-muted">{% if grade.date %}{{ grade.date.strftime('%Y-%m-%d') }}{% else %}N/A{% endif %}</td>
+                  <td>
+                    <span class="badge {{ status_class }}">{{ status_text }}</span>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="card-container empty-state-card">
+            <i class="bi bi-clipboard-x empty-icon"></i>
+            <p class="text-muted">No grades available yet. Complete quizzes and assignments to see your grades.</p>
+          </div>
+        {% endif %}
+      </div>
+    </section>
+  </main>
+
+  <!-- Video Player Modal -->
+  <div id="videoModal" class="video-modal" style="display: none;">
+    <div class="video-modal-content">
+      <div class="video-modal-header">
+        <h3 id="videoModalTitle"></h3>
+        <button class="close-video" onclick="closeVideoPlayer()">✕</button>
+      </div>
+      <div class="video-player-container">
+        <video id="modalVideo" controls controlsList="nodownload" style="width: 100%;">
+          <source id="modalVideoSource" src="" type="video/mp4">
+        </video>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quiz Question Modal -->
+  <div id="questionModal" class="question-modal" style="display: none;">
+    <div class="question-box">
+      <div class="question-timer" id="questionTimer"></div>
+      <h3 id="modalQuestion" class="modal-question-text"></h3>
+      <div id="modalOptions" class="modal-options-container"></div>
+      <div class="modal-actions">
+        <button id="submitAnswerBtn" class="btn-primary" onclick="submitAnswer()">Submit Answer</button>
+        <button id="closeModalBtn" class="btn-secondary" onclick="closeQuestionModal()">Continue Video</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

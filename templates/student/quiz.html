@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ quiz.title }} - Quiz</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <script src="{{ url_for('static', filename='js/core/shared.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/notification.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/mobile-menu.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/password-handler.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/core/form-validator.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/pages/student/quiz.js') }}"></script>
+
+</head>
+<body>
+  <header class="navbar">
+    <nav class="container">
+      <a href="{{ url_for('index') }}" class="logo">
+        <i class="bi bi-book"></i> EduPath
+      </a>
+      <ul class="nav-links">
+        <li><a href="{{ url_for('student_dashboard') }}">Dashboard</a></li>
+        <li><a href="{{ url_for('student_dashboard') }}#courses">My Courses</a></li>
+        <li><a href="{{ url_for('logout') }}">Logout</a></li>
+      </ul>
+      <div class="user-info">
+        <i class="bi bi-person-circle"></i>
+        <span>{{ session.name }}</span>
+      </div>
+      <button class="mobile-toggle" onclick="toggleMenu()">☰</button>
+    </nav>
+  </header>
+
+  <main>
+    <section class="section">
+      <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <!-- Quiz Header -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+          <div>
+            <h1 class="section-title" style="margin-bottom: 0.5rem;">{{ quiz.title }}</h1>
+            <p class="text-muted">{{ quiz.course_name }} • Time Limit: {{ quiz.time_limit or 'No limit' }} minutes</p>
+          </div>
+          <div id="timer" style="font-size: 1.5rem; font-weight: bold; color: var(--primary);"></div>
+        </div>
+
+        <!-- Quiz Form -->
+        <div class="form-card">
+          <form id="quizForm" method="POST">
+            <p class="text-muted" style="margin-bottom: 2rem;">{{ quiz.description }}</p>
+            
+            {% for question in questions %}
+            <div class="question-block" style="margin-bottom: 2rem; padding: 1rem; background: var(--background); border-radius: var(--radius);">
+              <h4 style="margin-bottom: 1rem;">Question {{ loop.index }} ({{ question.points }} points)</h4>
+              <p style="margin-bottom: 1rem;">{{ question.question }}</p>
+              
+              <div style="display: grid; gap: 0.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer;">
+                  <input type="radio" name="q_{{ question.id }}" value="A" required>
+                  <span>A. {{ question.option_a }}</span>
+                </label>
+                
+                <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer;">
+                  <input type="radio" name="q_{{ question.id }}" value="B" required>
+                  <span>B. {{ question.option_b }}</span>
+                </label>
+                
+                <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer;">
+                  <input type="radio" name="q_{{ question.id }}" value="C" required>
+                  <span>C. {{ question.option_c }}</span>
+                </label>
+                
+                <label style="display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer;">
+                  <input type="radio" name="q_{{ question.id }}" value="D" required>
+                  <span>D. {{ question.option_d }}</span>
+                </label>
+              </div>
+            </div>
+            {% endfor %}
+            
+            <button type="submit" class="btn-primary" id="submitBtn">
+              <i class="bi bi-check-circle"></i> Submit Quiz
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+ 
+</body>
+</html>

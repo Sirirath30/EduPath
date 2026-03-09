@@ -1,0 +1,191 @@
+   :root {
+      --primary: hsl(0, 72%, 51%);
+      --primary-hover: hsl(0, 75%, 42%);
+      --primary-dark: hsl(0, 75%, 35%);
+      --primary-light: hsl(0, 85%, 95%);
+      --success: hsl(134, 61%, 41%);
+      --success-light: hsl(134, 41%, 88%);
+      --danger: hsl(354, 70%, 54%);
+      --danger-light: hsl(354, 70%, 94%);
+      --warning: hsl(45, 100%, 45%);
+      --warning-light: hsl(45, 100%, 90%);
+      --background: hsl(0, 20%, 99%);
+      --card: hsl(0, 0%, 100%);
+      --border: hsl(0, 10%, 88%);
+      --text-main: hsl(0, 10%, 15%);
+      --muted-foreground: hsl(0, 0%, 45%);
+      --radius: 0.625rem;
+      --radius-lg: 1rem;
+    }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: var(--background);
+      color: var(--text-main);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    .navbar {
+      background: white;
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 0;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+
+    .btn-secondary {
+      background: white;
+      border: 1px solid var(--border);
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      color: var(--text-main);
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-secondary:hover {
+      background: var(--background);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-weight: 500;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .form-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+    }
+
+    .lesson-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+
+    .lesson-header {
+      padding: 1.5rem;
+      background: var(--background);
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .lesson-header i {
+      transition: transform 0.3s ease;
+      font-size: 1.2rem;
+      color: var(--muted-foreground);
+    }
+
+    .lesson-content {
+      padding: 1.5rem;
+      display: none;
+    }
+
+    .lesson-content.active {
+      display: block;
+    }
+
+    .lesson-status {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .status-completed {
+      background: var(--success-light);
+      color: var(--success);
+    }
+
+    .status-incomplete {
+      background: var(--background);
+      border: 1px solid var(--border);
+      color: var(--muted-foreground);
+    }
+
+    .material-link {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      margin-bottom: 0.5rem;
+      background: var(--background);
+      border-radius: var(--radius);
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .material-link:hover {
+      background: var(--primary-light);
+    }
+
+    .material-link i:first-child {
+      font-size: 1.5rem;
+      color: var(--primary);
+    }
+
+    .quiz-info {
+      background: var(--success-light);
+      color: var(--success);
+      padding: 0.25rem 0.75rem;
+      border-radius: 2rem;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .progress-container {
+      margin-top: 1rem;
+    }
+
+    .progress-bar {
+      width: 100%;
+      height: 10px;
+      background: var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      border-radius: 6px;
+      transition: width 0.3s ease;
+    }
+
+    .text-muted {
+      color: var(--muted-foreground);
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 2rem;
+    }
+
+    h2 {
+      margin: 2rem 0 1rem;
+    }
