@@ -1,5 +1,7 @@
 # EduPath E-Learning System
 
+Here is a accessible link to the prototype: https://edupath-olc2.onrender.com/
+
 EduPath is a Flask-based e-learning platform designed to manage online education through a role-based system. The platform supports three user roles: Admin, Teacher, and Student, each with distinct permissions and functionalities.
 
 ---
