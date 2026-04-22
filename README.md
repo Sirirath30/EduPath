@@ -91,22 +91,14 @@ Password: edupath123
 
 #Teacher Accounts
 
-Grade 11 and 12
-
-Email: limchantha@gmail.com
-Password: 12345678
-
-Grade 11
-
-Email: chansophea@gmail.com
-Password: 12345678
-
-Grade 12
+Grade 12 and 11
 
 Email: sirirath888@gmail.com
 Password: @Roth123
 
 #Student Accounts
+
+For student account you can register on the website using your own email address and explore. Here are some student account as a example below.
 
 Grade 12
 
@@ -117,6 +109,9 @@ Grade 11
 
 Email: johny@gmail.com
 Password: 12345678
+
+Email: samith.sirirath888@gmail.com
+Password: @Roth123
 
 #Features
 
